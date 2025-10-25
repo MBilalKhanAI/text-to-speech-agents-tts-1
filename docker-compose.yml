@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  tts-agents:
+    build: .
+    container_name: tts-agents
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - TTS_OUTPUT_DIR=/app/output
+      - TTS_LOG_LEVEL=INFO
+    volumes:
+      - ./output:/app/output
+      - ./logs:/app/logs
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import tts_agents; print('TTS Agents is healthy')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: Redis for caching (if needed for production)
+  redis:
+    image: redis:7-alpine
+    container_name: tts-agents-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    profiles:
+      - production
+
+volumes:
+  redis_data:
